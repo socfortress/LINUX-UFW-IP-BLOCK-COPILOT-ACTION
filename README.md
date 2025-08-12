@@ -1,10 +1,10 @@
-## Block-IP
+## UFW-Block-Ip.sh
 
 This script blocks a specified IP address using UFW (Uncomplicated Firewall), providing a JSON-formatted output for integration with security tools like OSSEC/Wazuh.
 
 ### Overview
 
-The `Block-IP` script checks if an IP address is already blocked by UFW and adds a deny rule if not present. It logs all actions and outputs the result in JSON format for active response workflows.
+The `UFW-Block-Ip.sh` script checks if an IP address is already blocked by UFW and adds a deny rule if not present. It logs all actions and outputs the result in JSON format for active response workflows.
 
 ### Script Details
 
@@ -20,7 +20,7 @@ The `Block-IP` script checks if an IP address is already blocked by UFW and adds
 
 #### Command Line Execution
 ```bash
-ARG1="1.2.3.4" ./Block-IP
+ARG1="1.2.3.4" ./UFW-Block-Ip.sh
 ```
 
 #### Parameters
@@ -29,7 +29,7 @@ ARG1="1.2.3.4" ./Block-IP
 |-----------|------|-------------|
 | `ARG1`    | string | The IP address to block (required) |
 | `LOG`     | string | `/var/ossec/active-response/active-responses.log` (output JSON log) |
-| `LogPath` | string | `/tmp/Block-IP.log` (detailed execution log) |
+| `LogPath` | string | `/tmp/UFW-Block-Ip.sh.log` (detailed execution log) |
 | `LogMaxKB` | int | 100 | Maximum log file size in KB before rotation |
 | `LogKeep` | int | 5 | Number of rotated log files to retain |
 
@@ -57,7 +57,7 @@ ARG1="1.2.3.4" ./Block-IP
 {
   "timestamp": "2025-07-18T10:30:45.123Z",
   "host": "HOSTNAME",
-  "action": "Block-IP",
+  "action": "UFW-Block-Ip.sh",
   "ip": "1.2.3.4",
   "status": "blocked",
   "reason": "IP blocked successfully",
@@ -70,7 +70,7 @@ ARG1="1.2.3.4" ./Block-IP
 {
   "timestamp": "2025-07-18T10:30:45.123Z",
   "host": "HOSTNAME",
-  "action": "Block-IP",
+  "action": "UFW-Block-Ip.sh",
   "ip": "1.2.3.4",
   "status": "already_blocked",
   "reason": "IP was already blocked",
@@ -83,7 +83,7 @@ ARG1="1.2.3.4" ./Block-IP
 {
   "timestamp": "2025-07-18T10:30:45.123Z",
   "host": "HOSTNAME",
-  "action": "Block-IP",
+  "action": "UFW-Block-Ip.sh",
   "ip": "",
   "status": "error",
   "reason": "No IP provided",
@@ -112,7 +112,7 @@ ARG1="1.2.3.4" ./Block-IP
 #### Debugging
 Enable verbose logging:
 ```bash
-VERBOSE=1 ARG1="1.2.3.4" ./Block-IP
+VERBOSE=1 ARG1="1.2.3.4" ./UFW-Block-Ip.sh
 ```
 
 ### Contributing
