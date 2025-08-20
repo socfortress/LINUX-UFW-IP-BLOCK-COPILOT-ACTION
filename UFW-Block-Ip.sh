@@ -76,7 +76,7 @@ final_json=$(jq -n \
   --arg ip "$IP" \
   --arg status "$Status" \
   --arg reason "$Reason" \
-  --argjson copilot_soar true \
+  --argjson copilot_action true \
   '{
     timestamp: $timestamp,
     host: $host,
@@ -84,7 +84,7 @@ final_json=$(jq -n \
     ip: $ip,
     status: $status,
     reason: $reason,
-    copilot_soar: $copilot_soar
+    copilot_action: $copilot_action
   }'
 )
 
