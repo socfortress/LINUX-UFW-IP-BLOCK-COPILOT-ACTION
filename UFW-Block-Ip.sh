@@ -32,7 +32,6 @@ RotateLog() {
 }
 
 escape_json() {
-  # minimal portable escaper
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
@@ -54,7 +53,7 @@ else
     Reason="ufw not installed"
   else
     WriteLog "INFO" "Blocking IP address: $IP"
-    # Check if already blocked (simple grep on ufw status)
+    # Check if already blocked
     if ufw status | grep -qw "$IP"; then
       WriteLog "INFO" "IP $IP is already blocked"
       Status="already_blocked"
@@ -73,11 +72,10 @@ else
   fi
 fi
 
-# Build one-line NDJSON entry
+# Build one-line NDJSON entry (overwrite + atomic move + .new fallback)
 Timestamp=$(date --iso-8601=seconds 2>/dev/null || date -Iseconds)
 final_json="{\"timestamp\":\"$Timestamp\",\"host\":\"$HostName\",\"action\":\"$ScriptName\",\"ip\":\"$(escape_json "$IP")\",\"status\":\"$Status\",\"reason\":\"$(escape_json "$Reason")\",\"copilot_action\":true}"
 
-# Atomic overwrite with .new fallback
 tmpfile=$(mktemp)
 printf '%s\n' "$final_json" > "$tmpfile"
 if ! mv -f "$tmpfile" "$ARLog" 2>/dev/null; then
