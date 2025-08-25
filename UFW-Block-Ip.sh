@@ -2,12 +2,15 @@
 set -eu
 
 ScriptName="Block-IP"
-LOG="/var/ossec/active-response/active-responses.log"
 LogPath="/tmp/${ScriptName}.log"
+ARLog="/var/ossec/active-response/active-responses.log"
 LogMaxKB=100
 LogKeep=5
 HostName="$(hostname)"
 RunStart=$(date +%s)
+
+# Prefer ARG1 from Velociraptor, fallback to $1
+IP="${ARG1:-${1:-}}"
 
 WriteLog() {
   local level="$1"
@@ -31,26 +34,22 @@ RotateLog() {
   mv -f "$LogPath" "$LogPath.1"
 }
 
+escape_json() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
 RotateLog
+WriteLog "=== SCRIPT START : $ScriptName ==="
 
-if ! rm -f "$LOG" 2>/dev/null; then
-  WriteLog "WARN" "Failed to clear $LOG (might be locked)"
-else
-  : > "$LOG"
-  WriteLog "INFO" "Active response log cleared for fresh run."
-fi
 
-WriteLog "INFO" "=== SCRIPT START : $ScriptName ==="
 
-IP="${ARG1:-}"
+Status="error"
+Reason="No IP provided"
 
-if [ -z "$IP" ]; then
+if [ -z "${IP:-}" ]; then
   WriteLog "ERROR" "No IP address provided, exiting."
-  Status="error"
-  Reason="No IP provided"
 else
   WriteLog "INFO" "Blocking IP address: $IP"
-  # Check if already blocked
   if ufw status | grep -qw "$IP"; then
     WriteLog "INFO" "IP $IP is already blocked"
     Status="already_blocked"
@@ -68,31 +67,16 @@ else
   fi
 fi
 
+# Build NDJSON entry
 Timestamp=$(date --iso-8601=seconds 2>/dev/null || date -Iseconds)
-final_json=$(jq -n \
-  --arg timestamp "$Timestamp" \
-  --arg host "$HostName" \
-  --arg action "$ScriptName" \
-  --arg ip "$IP" \
-  --arg status "$Status" \
-  --arg reason "$Reason" \
-  --argjson copilot_action true \
-  '{
-    timestamp: $timestamp,
-    host: $host,
-    action: $action,
-    ip: $ip,
-    status: $status,
-    reason: $reason,
-    copilot_action: $copilot_action
-  }'
-)
+final_json="{\"timestamp\":\"$Timestamp\",\"host\":\"$HostName\",\"action\":\"$ScriptName\",\"ip\":\"$(escape_json "$IP")\",\"status\":\"$Status\",\"reason\":\"$(escape_json "$Reason")\",\"copilot_action\":true}"
 
+# Atomic write: overwrite ARLog or fallback to ARLog.new
 tmpfile=$(mktemp)
-echo "$final_json" > "$tmpfile"
-if ! mv -f "$tmpfile" "$LOG" 2>/dev/null; then
-  mv -f "$tmpfile" "$LOG.new"
+printf '%s\n' "$final_json" > "$tmpfile"
+if ! mv -f "$tmpfile" "$ARLog" 2>/dev/null; then
+  mv -f "$tmpfile" "$ARLog.new"
 fi
 
 Duration=$(( $(date +%s) - RunStart ))
-WriteLog "INFO" "=== SCRIPT END : duration ${Duration}s ==="
+WriteLog "=== SCRIPT END : duration ${Duration}s ==="
