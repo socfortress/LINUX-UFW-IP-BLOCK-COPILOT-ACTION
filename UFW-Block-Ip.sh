@@ -9,9 +9,6 @@ LogKeep=5
 HostName="$(hostname)"
 RunStart=$(date +%s)
 
-# Prefer ARG1 from Velociraptor, fallback to $1
-IP="${ARG1:-${1:-}}"
-
 WriteLog() {
   local level="$1"
   local message="$2"
@@ -41,7 +38,8 @@ escape_json() {
 RotateLog
 WriteLog "=== SCRIPT START : $ScriptName ==="
 
-
+# Prefer ARG1 from Velociraptor, fallback to $1
+IP="${ARG1:-${1:-}}"
 
 Status="error"
 Reason="No IP provided"
