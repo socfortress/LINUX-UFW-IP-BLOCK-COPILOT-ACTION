@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-ScriptName="Block-IP"
+ScriptName="UFW-Block-IP"
 LogPath="/tmp/${ScriptName}.log"
 ARLog="/var/ossec/active-response/active-responses.log"
 LogMaxKB=100
@@ -32,44 +32,52 @@ RotateLog() {
 }
 
 escape_json() {
+  # minimal portable escaper
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
 RotateLog
-WriteLog "=== SCRIPT START : $ScriptName ==="
+WriteLog "INFO" "=== SCRIPT START : $ScriptName ==="
 
-# Prefer ARG1 from Velociraptor, fallback to $1
+# Prefer ARG1 from Velociraptor, fallback to positional $1
 IP="${ARG1:-${1:-}}"
 
 Status="error"
 Reason="No IP provided"
 
 if [ -z "${IP:-}" ]; then
-  WriteLog "ERROR" "No IP address provided, exiting."
+  WriteLog "ERROR" "No IP address provided"
 else
-  WriteLog "INFO" "Blocking IP address: $IP"
-  if ufw status | grep -qw "$IP"; then
-    WriteLog "INFO" "IP $IP is already blocked"
-    Status="already_blocked"
-    Reason="IP was already blocked"
+  if ! command -v ufw >/dev/null 2>&1; then
+    WriteLog "ERROR" "ufw not installed or not in PATH"
+    Status="failed"
+    Reason="ufw not installed"
   else
-    if ufw deny from "$IP"; then
-      WriteLog "INFO" "Blocked IP $IP successfully"
-      Status="blocked"
-      Reason="IP blocked successfully"
+    WriteLog "INFO" "Blocking IP address: $IP"
+    # Check if already blocked (simple grep on ufw status)
+    if ufw status | grep -qw "$IP"; then
+      WriteLog "INFO" "IP $IP is already blocked"
+      Status="already_blocked"
+      Reason="IP already blocked"
     else
-      WriteLog "ERROR" "Failed to block IP $IP"
-      Status="failed"
-      Reason="ufw command failed"
+      if ufw deny from "$IP" >/dev/null 2>&1; then
+        WriteLog "INFO" "Blocked IP $IP successfully"
+        Status="blocked"
+        Reason="IP blocked successfully"
+      else
+        WriteLog "ERROR" "Failed to block IP $IP (ufw command failed)"
+        Status="failed"
+        Reason="ufw command failed"
+      fi
     fi
   fi
 fi
 
-# Build NDJSON entry
+# Build one-line NDJSON entry
 Timestamp=$(date --iso-8601=seconds 2>/dev/null || date -Iseconds)
 final_json="{\"timestamp\":\"$Timestamp\",\"host\":\"$HostName\",\"action\":\"$ScriptName\",\"ip\":\"$(escape_json "$IP")\",\"status\":\"$Status\",\"reason\":\"$(escape_json "$Reason")\",\"copilot_action\":true}"
 
-# Atomic write: overwrite ARLog or fallback to ARLog.new
+# Atomic overwrite with .new fallback
 tmpfile=$(mktemp)
 printf '%s\n' "$final_json" > "$tmpfile"
 if ! mv -f "$tmpfile" "$ARLog" 2>/dev/null; then
@@ -77,4 +85,4 @@ if ! mv -f "$tmpfile" "$ARLog" 2>/dev/null; then
 fi
 
 Duration=$(( $(date +%s) - RunStart ))
-WriteLog "=== SCRIPT END : duration ${Duration}s ==="
+WriteLog "INFO" "=== SCRIPT END : duration ${Duration}s ==="
