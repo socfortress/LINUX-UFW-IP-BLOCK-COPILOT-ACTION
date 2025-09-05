@@ -9,7 +9,8 @@
       "type": "string",
       "required": true,
       "description": "IPv4 address to block via UFW (e.g., 203.0.113.45).",
-      "default": null
+      "default": null,
+      "arg_position" : "1"
     },
     {
       "name": "ARLog",
