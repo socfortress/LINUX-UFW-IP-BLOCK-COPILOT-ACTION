@@ -12,36 +12,8 @@
       "default": null,
       "arg_position" : "1"
     },
-    {
-      "name": "ARLog",
-      "type": "string",
-      "required": false,
-      "description": "Active Response NDJSON output path (atomic overwrite; falls back to .new if locked).",
-      "default": "/var/ossec/active-response/active-responses.log"
-    },
-    {
-      "name": "LogPath",
-      "type": "string",
-      "required": false,
-      "description": "Path to the rotating human-readable script log.",
-      "default": "/tmp/Block-IP.log"
-    },
-    {
-      "name": "LogMaxKB",
-      "type": "integer",
-      "required": false,
-      "description": "Maximum size of the log file (KB) before rotation.",
-      "default": 100
-    },
-    {
-      "name": "LogKeep",
-      "type": "integer",
-      "required": false,
-      "description": "Number of rotated log files to keep.",
-      "default": 5
-    }
   ],
-  "repo_url": "https://raw.githubusercontent.com/socfortress/LINUX-UFW-IP-BLOCK-COPILOT-ACTION/refs/heads/main/",
+  "repo_url": "https://raw.githubusercontent.com/socfortress/LINUX-UFW-IP-BLOCK-COPILOT-ACTION/refs/heads/main/UFW-Block-Ip.sh",
   "script_name": "UFW-Block-Ip.sh",
   "version": "1.0.0",
   "last_updated": "2025-08-23T00:00:00Z"
